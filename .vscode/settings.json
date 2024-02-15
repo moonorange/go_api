@@ -1,0 +1,5 @@
+{
+    "yaml.schemas": {
+        "swaggerviewer:swagger": "file:///Users/kidakeigo/self-study/go-study/go_api/swagger.yml"
+    }
+}
