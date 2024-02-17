@@ -1,0 +1,17 @@
+.gitignore
+.travis.yml
+README.md
+api/openapi.yaml
+api_task.go
+client.go
+configuration.go
+docs/Error.md
+docs/Task.md
+docs/TaskAPI.md
+git_push.sh
+go.mod
+go.sum
+model_error.go
+model_task.go
+response.go
+utils.go
