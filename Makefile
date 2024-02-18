@@ -1,6 +1,2 @@
 gen-todo:
-	openapi-generator generate \
-    -i todo.yaml \
-    -g go \
-    -o gen/todo \
-	--additional-properties packageName=todo
+	oapi-codegen --package=openapi --generate types,chi-server todo.yaml > oapi/openapi.gen.go
