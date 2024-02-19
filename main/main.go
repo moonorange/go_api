@@ -1,37 +1,53 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"log"
+	"net"
 	"net/http"
+	"os"
 
-	"github.com/moonorange/go_api/openapi"
+	"github.com/go-chi/chi/v5"
+	"github.com/moonorange/go_api/api"
+	"github.com/moonorange/go_api/domain/services"
+	middleware "github.com/oapi-codegen/nethttp-middleware"
 )
 
-type TodoServer struct {
-}
-
-func (t TodoServer) TasksGetAll(w http.ResponseWriter, r *http.Request) {
-	// our logic to retrieve all todos from a persistent layer
-}
-
-func (t TodoServer) TasksCreate(w http.ResponseWriter, r *http.Request) {
-	// our logic to store the todo into a persistent layer
-}
-
-func (t TodoServer) TasksDelete(w http.ResponseWriter, r *http.Request, taskId string) {
-	// our logic to delete a todo from the persistent layer
-}
-
-func (t TodoServer) TasksRead(w http.ResponseWriter, r *http.Request, taskId string) {
-	// our logic to read the todo.
-}
-
-func (t TodoServer) TasksUpdate(w http.ResponseWriter, r *http.Request, taskId string) {
-	// our logic to update the todo.
-}
-
 func main() {
-	s := TodoServer{}
-	h := openapi.Handler(s)
+	port := flag.String("port", "8080", "Port for test HTTP server")
+	flag.Parse()
 
-	http.ListenAndServe(":8000", h)
+	swagger, err := api.GetSwagger()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		os.Exit(1)
+	}
+
+	// Clear out the servers array in the swagger spec, that skips validating
+	// that server names match. We don't know how this thing will be run.
+	swagger.Servers = nil
+
+	// Create an instance of our handler which satisfies the generated interface
+	var service services.TodoService
+	todoServer := api.NewTodoAPI(service)
+
+	// This is how you set up a basic chi router
+	r := chi.NewRouter()
+
+	// Use our validation middleware to check all requests against the
+	// OpenAPI schema.
+	r.Use(middleware.OapiRequestValidator(swagger))
+
+	// We now register our todoServer above as the handler for the interface
+	api.HandlerFromMux(todoServer, r)
+
+	s := &http.Server{
+		Handler: r,
+		Addr:    net.JoinHostPort("0.0.0.0", *port),
+	}
+	fmt.Printf("Server listening on %s", s.Addr)
+
+	// And we serve HTTP until the world ends.
+	log.Fatal(s.ListenAndServe())
 }
