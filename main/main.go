@@ -10,7 +10,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/moonorange/go_api/api"
-	"github.com/moonorange/go_api/domain/services"
+	"github.com/moonorange/go_api/api/gen"
+	"github.com/moonorange/go_api/application/usecase"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 )
 
@@ -18,7 +19,7 @@ func main() {
 	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 
-	swagger, err := api.GetSwagger()
+	swagger, err := gen.GetSwagger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)
@@ -29,8 +30,8 @@ func main() {
 	swagger.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
-	var service services.TodoService
-	todoServer := api.NewTodoAPI(service)
+	var uc usecase.TodoUseCase
+	todoServer := api.NewTodoAPI(uc)
 
 	// This is how you set up a basic chi router
 	r := chi.NewRouter()
@@ -40,7 +41,7 @@ func main() {
 	r.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our todoServer above as the handler for the interface
-	api.HandlerFromMux(todoServer, r)
+	gen.HandlerFromMux(todoServer, r)
 
 	s := &http.Server{
 		Handler: r,
