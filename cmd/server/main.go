@@ -9,9 +9,9 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/moonorange/go_api/api"
-	"github.com/moonorange/go_api/api/gen"
-	"github.com/moonorange/go_api/application/usecase"
+	"github.com/moonorange/go_api/api/handlers"
+	"github.com/moonorange/go_api/api/services"
+	"github.com/moonorange/go_api/gen"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 )
 
@@ -30,8 +30,8 @@ func main() {
 	swagger.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
-	var uc usecase.TodoUseCase
-	todoServer := api.NewTodoAPI(uc)
+	var s services.TodoService
+	todoServer := handlers.NewTodoHandler(s)
 
 	// This is how you set up a basic chi router
 	r := chi.NewRouter()
@@ -43,12 +43,12 @@ func main() {
 	// We now register our todoServer above as the handler for the interface
 	gen.HandlerFromMux(todoServer, r)
 
-	s := &http.Server{
+	server := &http.Server{
 		Handler: r,
 		Addr:    net.JoinHostPort("0.0.0.0", *port),
 	}
-	fmt.Printf("Server listening on %s", s.Addr)
+	fmt.Printf("Server listening on %s", server.Addr)
 
 	// And we serve HTTP until the world ends.
-	log.Fatal(s.ListenAndServe())
+	log.Fatal(server.ListenAndServe())
 }

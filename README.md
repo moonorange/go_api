@@ -10,12 +10,10 @@ make gen-todo
 
 ## Directory structure
 
-`api/gen` has auto-generated code from the YAML file that follows the swagger specification
+`gen`: auto-generated code from the YAML file that follows the swagger specification
 
-`api/**impl` has the implementation of the server interface of the generated code
+`services` Business logic
 
-You write the application's use case logic in the `application/usecase`
+`repositories`: Database interaction logic
 
-You write data-related code in the `domain/repository`
-
-You return data to the client in the `interface/*/handler`
+`handlers`: Handlers for each route

@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/moonorange/go_api/api/gen"
-	"github.com/moonorange/go_api/application/usecase"
+	"github.com/moonorange/go_api/api/services"
+	"github.com/moonorange/go_api/gen"
 )
 
 type (
@@ -15,25 +15,25 @@ type (
 		TODOs map[string]gen.Task
 		Lock  sync.Mutex
 	}
-	todoAPI struct {
-		uc    usecase.TodoUseCase
+	todoHandler struct {
+		uc    services.TodoService
 		Store *TodoStore
 	}
 )
 
 // Make sure we conform to gen.ServerInterface
-var _ gen.ServerInterface = (*todoAPI)(nil)
+var _ gen.ServerInterface = (*todoHandler)(nil)
 
-func NewTodoAPI(usecase usecase.TodoUseCase) gen.ServerInterface {
-	return &todoAPI{
-		uc: usecase,
+func NewTodoHandler(services services.TodoService) gen.ServerInterface {
+	return &todoHandler{
+		uc: services,
 		Store: &TodoStore{
 			TODOs: make(map[string]gen.Task)},
 	}
 }
 
 // TasksCreate implements gen.ServerInterface.
-func (t *todoAPI) TasksCreate(w http.ResponseWriter, r *http.Request) {
+func (t *todoHandler) TasksCreate(w http.ResponseWriter, r *http.Request) {
 	var newTODO gen.Task
 	err := json.NewDecoder(r.Body).Decode(&newTODO)
 	if err != nil {
@@ -52,12 +52,12 @@ func (t *todoAPI) TasksCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 // TasksDelete implements gen.ServerInterface.
-func (t *todoAPI) TasksDelete(w http.ResponseWriter, r *http.Request, taskId string) {
+func (t *todoHandler) TasksDelete(w http.ResponseWriter, r *http.Request, taskId string) {
 	panic("unimplemented")
 }
 
 // TasksGetAll implements gen.ServerInterface.
-func (t *todoAPI) TasksGetAll(w http.ResponseWriter, r *http.Request) {
+func (t *todoHandler) TasksGetAll(w http.ResponseWriter, r *http.Request) {
 	t.Store.Lock.Lock()
 	defer t.Store.Lock.Unlock()
 
@@ -73,7 +73,7 @@ func (t *todoAPI) TasksGetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 // TasksRead implements gen.ServerInterface.
-func (t *todoAPI) TasksRead(w http.ResponseWriter, r *http.Request, taskId string) {
+func (t *todoHandler) TasksRead(w http.ResponseWriter, r *http.Request, taskId string) {
 	t.Store.Lock.Lock()
 	defer t.Store.Lock.Unlock()
 
@@ -88,7 +88,7 @@ func (t *todoAPI) TasksRead(w http.ResponseWriter, r *http.Request, taskId strin
 }
 
 // TasksUpdate implements gen.ServerInterface.
-func (t *todoAPI) TasksUpdate(w http.ResponseWriter, r *http.Request, taskId string) {
+func (t *todoHandler) TasksUpdate(w http.ResponseWriter, r *http.Request, taskId string) {
 	panic("unimplemented")
 }
 
