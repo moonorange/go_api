@@ -20,4 +20,4 @@ make gen-todo
 
 ## DB Migration
 
-Using pressly/goose[https://github.com/pressly/goose] for db migration
+Using [pressly/goose](https://github.com/pressly/goose) for db migration
