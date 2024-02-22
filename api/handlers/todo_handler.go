@@ -37,7 +37,7 @@ func (t *todoHandler) TasksCreate(w http.ResponseWriter, r *http.Request) {
 	var newTODO gen.Task
 	err := json.NewDecoder(r.Body).Decode(&newTODO)
 	if err != nil {
-		sendTodoError(w, http.StatusBadRequest, "Invalid format for newTODO")
+		sendError(w, http.StatusBadRequest, "Invalid format for newTODO")
 		return
 	}
 	t.Store.Lock.Lock()
@@ -92,9 +92,9 @@ func (t *todoHandler) TasksUpdate(w http.ResponseWriter, r *http.Request, taskId
 	panic("unimplemented")
 }
 
-// sendTodoError wraps sending of an error in the Error format, and
+// Wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendTodoError(w http.ResponseWriter, code int, message string) {
+func sendError(w http.ResponseWriter, code int, message string) {
 	castedCode := int32(code)
 	todoErr := gen.Error{
 		Code:    &castedCode,

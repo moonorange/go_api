@@ -1,6 +1,6 @@
 # Go API
 
-Generate server and client stubs using `https://github.com/deepmap/oapi-codegen`
+Generate server stubs using `https://github.com/deepmap/oapi-codegen`
 
 ## Generate code
 
@@ -17,3 +17,7 @@ make gen-todo
 `repositories`: Database interaction logic
 
 `handlers`: Handlers for each route
+
+## DB Migration
+
+Using pressly/goose[https://github.com/pressly/goose] for db migration
