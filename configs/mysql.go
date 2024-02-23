@@ -6,7 +6,11 @@ import (
 	"time"
 )
 
-func (c MySQLConfig) GetDSN() string {
+type MySQLConfig struct {
+	DatabaseConfig
+}
+
+func (c *MySQLConfig) GetDSN() string {
 	// parseTime=true changes the output type of DATE and DATETIME values to time.Time instead of []byte / string
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?parseTime=true",
@@ -23,10 +27,6 @@ func (c MySQLConfig) GetDSN() string {
 	return dsn
 }
 
-type MySQLConfig struct {
-	DatabaseConfig
-}
-
 type DatabaseConfig interface {
 	GetHost() string
 	GetPort() string
@@ -37,7 +37,7 @@ type DatabaseConfig interface {
 	GetConnMaxLifetime() time.Duration
 }
 
-// check MyDBConfig satisfies the DatabaseConfig interface
+// Check MyDBConfig satisfies the DatabaseConfig interface
 var _ DatabaseConfig = &MyDBConfig{}
 
 func (a *MyDBConfig) GetHost() string                   { return a.host }
@@ -54,8 +54,8 @@ type MyDBConfig struct {
 	user             string
 	password         string
 	dbname           string
-	maxAllowedPacket int32         // sets an upper limit on the size of any single message between the MySQL server and clients,
-	connMaxLifetime  time.Duration // maximum length of time a connection can be held open before it is closed.
+	maxAllowedPacket int32         // Sets an upper limit on the size of any single message between the MySQL server and clients,
+	connMaxLifetime  time.Duration // Maximum length of time a connection can be held open before it is closed.
 }
 
 var (
@@ -66,6 +66,7 @@ var (
 )
 
 func init() {
+	// Default setting when any env variable isn't set
 	MySQLWriter = MyDBConfig{
 		host:   "127.0.0.1",
 		port:   "3306",
@@ -73,7 +74,7 @@ func init() {
 		dbname: "mydb",
 		// It follows the db instance setting when it is set to 0
 		maxAllowedPacket: 0,
-		connMaxLifetime:  30 * time.Minute,
+		connMaxLifetime:  4 * time.Minute,
 	}
 
 	if s := os.Getenv("MYSQL_HOST"); len(s) > 0 {
@@ -94,6 +95,7 @@ func init() {
 
 	MySQLReader = MySQLWriter
 
+	// Change the host for reader instances
 	if s := os.Getenv("MYSQL_HOST_RO"); len(s) > 0 {
 		MySQLReader.host = s
 	}
