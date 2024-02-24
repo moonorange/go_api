@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"sync"
 
@@ -16,7 +18,7 @@ type (
 		Lock  sync.Mutex
 	}
 	todoHandler struct {
-		uc    services.TodoService
+		s     services.TodoService
 		Store *TodoStore
 	}
 )
@@ -26,7 +28,7 @@ var _ gen.ServerInterface = (*todoHandler)(nil)
 
 func NewTodoHandler(services services.TodoService) gen.ServerInterface {
 	return &todoHandler{
-		uc: services,
+		s: services,
 		Store: &TodoStore{
 			TODOs: make(map[string]gen.Task)},
 	}
@@ -58,14 +60,10 @@ func (t *todoHandler) TasksDelete(w http.ResponseWriter, r *http.Request, taskId
 
 // TasksGetAll implements gen.ServerInterface.
 func (t *todoHandler) TasksGetAll(w http.ResponseWriter, r *http.Request) {
-	t.Store.Lock.Lock()
-	defer t.Store.Lock.Unlock()
 
-	var tasks []gen.Task
-
-	for _, todo := range t.Store.TODOs {
-		// Add all pets if we're not filtering
-		tasks = append(tasks, todo)
+	tasks, err := t.s.TasksGetAll(context.Background())
+	if err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -102,4 +100,41 @@ func sendError(w http.ResponseWriter, code int, message string) {
 	}
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(todoErr)
+}
+
+// LogError logs an error with the HTTP route information.
+func LogError(r *http.Request, err error) {
+	log.Printf("[http] error: %s %s: %s", r.Method, r.URL.Path, err)
+}
+
+// Error prints & optionally logs an error message.
+func Error(w http.ResponseWriter, r *http.Request, err error) {
+	// Extract error code & message.
+	code, message := wtf.ErrorCode(err), wtf.ErrorMessage(err)
+
+	// Track metrics by code.
+	errorCount.WithLabelValues(code).Inc()
+
+	// Log & report internal errors.
+	if code == wtf.EINTERNAL {
+		wtf.ReportError(r.Context(), err, r)
+		LogError(r, err)
+	}
+
+	// Print user message to response based on reqeust accept header.
+	switch r.Header.Get("Accept") {
+	case "application/json":
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(ErrorStatusCode(code))
+		json.NewEncoder(w).Encode(&ErrorResponse{Error: message})
+
+	default:
+		w.WriteHeader(ErrorStatusCode(code))
+		tmpl := html.ErrorTemplate{
+			StatusCode: ErrorStatusCode(code),
+			Header:     "An error has occurred.",
+			Message:    message,
+		}
+		tmpl.Render(r.Context(), w)
+	}
 }
