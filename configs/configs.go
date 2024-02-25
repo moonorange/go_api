@@ -27,6 +27,20 @@ func (c *MySQLConfig) GetDSN() string {
 	return dsn
 }
 
+func GetDefaultDSN() string {
+	// parseTime=true changes the output type of DATE and DATETIME values to time.Time instead of []byte / string
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		"local_user",
+		"mypassword",
+		"127.0.0.1",
+		"3306",
+		"mydb",
+	)
+
+	return dsn
+}
+
 type DatabaseConfig interface {
 	GetHost() string
 	GetPort() string

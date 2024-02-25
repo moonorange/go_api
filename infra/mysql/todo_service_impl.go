@@ -19,7 +19,7 @@ func NewTODOService(db *DB) *TodoService {
 // FindDialByID retrieves a single dial by ID along with associated memberships.
 // Only the dial owner & members can see a dial. Returns ENOTFOUND if dial does
 // not exist or user does not have permission to view it.
-func (s *TodoService) TasksGetAll(ctx context.Context, id int) ([]*domain.Todo, error) {
+func (s *TodoService) TasksGetAll(ctx context.Context) ([]*domain.Todo, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -70,4 +70,20 @@ func (s *TodoService) listTodos(ctx context.Context, tx *Tx) ([]*domain.Todo, er
 	}
 
 	return todos, nil
+}
+
+func (s *TodoService) TasksCreate(ctx context.Context, task domain.Todo) (*domain.Todo, error) {
+	return nil, nil
+}
+
+func (s *TodoService) TasksDelete(ctx context.Context, id string) error {
+	return nil
+}
+
+func (s *TodoService) TasksRead(ctx context.Context, id string) (domain.Todo, error) {
+	return domain.Todo{}, nil
+}
+
+func (s *TodoService) TasksUpdate(ctx context.Context, task domain.Todo) (*domain.Todo, error) {
+	return nil, nil
 }

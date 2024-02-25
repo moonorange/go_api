@@ -10,8 +10,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/moonorange/go_api/api/handlers"
-	"github.com/moonorange/go_api/api/services"
+	"github.com/moonorange/go_api/configs"
 	"github.com/moonorange/go_api/gen"
+	"github.com/moonorange/go_api/infra/mysql"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 )
 
@@ -29,8 +30,11 @@ func main() {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
+	dsn := configs.GetDefaultDSN()
+	db := mysql.NewDB(dsn)
+
 	// Create an instance of our handler which satisfies the generated interface
-	var s services.TodoService
+	s := mysql.NewTODOService(db)
 	todoServer := handlers.NewTodoHandler(s)
 
 	// This is how you set up a basic chi router

@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -40,13 +38,6 @@ func (db *DB) Open() (err error) {
 	// Ensure a DSN is set before attempting to open the database.
 	if db.DSN == "" {
 		return fmt.Errorf("dsn required")
-	}
-
-	// Make the parent directory unless using an in-memory db.
-	if db.DSN != ":memory:" {
-		if err := os.MkdirAll(filepath.Dir(db.DSN), 0700); err != nil {
-			return err
-		}
 	}
 
 	// Connect to the database.
