@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/moonorange/go_api/api/services"
+	"github.com/moonorange/go_api/domain"
 	"github.com/moonorange/go_api/gen"
 	"github.com/moonorange/go_api/terrors"
 	"github.com/moonorange/go_api/thttp"
@@ -38,21 +38,21 @@ func NewTodoHandler(services services.TodoService) gen.ServerInterface {
 
 // TasksCreate implements gen.ServerInterface.
 func (t *todoHandler) TasksCreate(w http.ResponseWriter, r *http.Request) {
-	var newTODO gen.Task
-	err := json.NewDecoder(r.Body).Decode(&newTODO)
+	var newTask domain.Todo
+	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
-		sendError(w, http.StatusBadRequest, "Invalid format for newTODO")
+		sendError(w, http.StatusBadRequest, "Invalid format for newTask")
 		return
 	}
-	t.Store.Lock.Lock()
-	defer t.Store.Lock.Unlock()
 
-	newID := uuid.New().String()
-	newTODO.Id = &newID
-	t.Store.TODOs[newID] = newTODO
+	err = t.s.TasksCreate(context.Background(), &newTask)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(newTODO)
+	_ = json.NewEncoder(w).Encode(newTask)
 }
 
 // TasksDelete implements gen.ServerInterface.

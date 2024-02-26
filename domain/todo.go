@@ -4,9 +4,9 @@ import "github.com/google/uuid"
 
 type Todo struct {
 	// Task ID
-	ID uuid.UUID
+	ID uuid.UUID `json:"id,omitempty"`
 	// Task description
-	Description string
+	Description string `json:"description,omitempty"`
 	// boolean value to show if the task is completed or not
-	IsCompleted bool
+	IsCompleted bool `json:"completed,omitempty"`
 }

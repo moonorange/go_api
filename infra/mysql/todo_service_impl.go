@@ -2,7 +2,11 @@ package mysql
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"os"
 
+	"github.com/google/uuid"
 	"github.com/moonorange/go_api/domain"
 )
 
@@ -24,7 +28,12 @@ func (s *TodoService) TasksGetAll(ctx context.Context) ([]*domain.Todo, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer func() {
+		err := tx.Rollback()
+		if err != nil {
+			log.Printf("transaction roll back error")
+		}
+	}()
 
 	// Fetch todo objects
 	todo, err := s.listTodos(ctx, tx)
@@ -72,8 +81,40 @@ func (s *TodoService) listTodos(ctx context.Context, tx *Tx) ([]*domain.Todo, er
 	return todos, nil
 }
 
-func (s *TodoService) TasksCreate(ctx context.Context, task domain.Todo) (*domain.Todo, error) {
-	return nil, nil
+func (s *TodoService) TasksCreate(ctx context.Context, task *domain.Todo) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err := tx.Rollback()
+		if err != nil {
+			log.Printf("transaction roll back error")
+		}
+	}()
+	// Create todo objects
+	err = s.createTodo(ctx, tx, task)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (s *TodoService) createTodo(ctx context.Context, tx *Tx, task *domain.Todo) error {
+	task.ID = uuid.New()
+	// Execute query
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO todos (id, description, is_completed)
+		VALUES (?, ?, ?)
+	`,
+		task.ID, task.Description, task.IsCompleted,
+	)
+	fmt.Fprintf(os.Stdout, "task\n: %+v", task)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *TodoService) TasksDelete(ctx context.Context, id string) error {
@@ -84,6 +125,6 @@ func (s *TodoService) TasksRead(ctx context.Context, id string) (domain.Todo, er
 	return domain.Todo{}, nil
 }
 
-func (s *TodoService) TasksUpdate(ctx context.Context, task domain.Todo) (*domain.Todo, error) {
-	return nil, nil
+func (s *TodoService) TasksUpdate(ctx context.Context, task *domain.Todo) error {
+	return nil
 }

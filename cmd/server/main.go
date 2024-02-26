@@ -32,6 +32,11 @@ func main() {
 
 	dsn := configs.GetDefaultDSN()
 	db := mysql.NewDB(dsn)
+	err = db.Open()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening db\n: %s", err)
+		os.Exit(1)
+	}
 
 	// Create an instance of our handler which satisfies the generated interface
 	s := mysql.NewTODOService(db)
