@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/moonorange/go_api/domain"
+	"github.com/moonorange/go_api/models"
 )
 
 // TaskService represents a service for managing dials.
@@ -14,14 +14,14 @@ type TaskService struct {
 }
 
 // NewTaskService returns a new instance of TaskService.
-func NewTODOService(db *DB) *TaskService {
+func NewTaskService(db *DB) *TaskService {
 	return &TaskService{db: db}
 }
 
 // FindDialByID retrieves a single dial by ID along with associated memberships.
 // Only the dial owner & members can see a dial. Returns ENOTFOUND if dial does
 // not exist or user does not have permission to view it.
-func (s *TaskService) TasksGetAll(ctx context.Context) ([]*domain.Task, error) {
+func (s *TaskService) TasksGetAll(ctx context.Context) ([]*models.Task, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (s *TaskService) TasksGetAll(ctx context.Context) ([]*domain.Task, error) {
 	return todo, nil
 }
 
-func (s *TaskService) listTasks(ctx context.Context, tx *Tx) ([]*domain.Task, error) {
+func (s *TaskService) listTasks(ctx context.Context, tx *Tx) ([]*models.Task, error) {
 
 	args := []interface{}{}
 	// Execute query
@@ -60,9 +60,9 @@ func (s *TaskService) listTasks(ctx context.Context, tx *Tx) ([]*domain.Task, er
 	defer rows.Close()
 
 	// Iterate over rows and deserialize into Task objects.
-	tasks := make([]*domain.Task, 0)
+	tasks := make([]*models.Task, 0)
 	for rows.Next() {
-		var todo domain.Task
+		var todo models.Task
 		if err := rows.Scan(
 			&todo.ID,
 			&todo.Description,
@@ -79,7 +79,7 @@ func (s *TaskService) listTasks(ctx context.Context, tx *Tx) ([]*domain.Task, er
 	return tasks, nil
 }
 
-func (s *TaskService) TasksCreate(ctx context.Context, task *domain.Task) error {
+func (s *TaskService) TasksCreate(ctx context.Context, task *models.Task) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func (s *TaskService) TasksCreate(ctx context.Context, task *domain.Task) error 
 	return tx.Commit()
 }
 
-func (s *TaskService) createTask(ctx context.Context, tx *Tx, task *domain.Task) error {
+func (s *TaskService) createTask(ctx context.Context, tx *Tx, task *models.Task) error {
 	task.ID = uuid.New()
 	// Execute query
 	_, err := tx.ExecContext(ctx, `
@@ -118,10 +118,10 @@ func (s *TaskService) TasksDelete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *TaskService) TasksRead(ctx context.Context, id string) (domain.Task, error) {
-	return domain.Task{}, nil
+func (s *TaskService) TasksRead(ctx context.Context, id string) (models.Task, error) {
+	return models.Task{}, nil
 }
 
-func (s *TaskService) TasksUpdate(ctx context.Context, task *domain.Task) error {
+func (s *TaskService) TasksUpdate(ctx context.Context, task *models.Task) error {
 	return nil
 }

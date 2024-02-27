@@ -10,10 +10,10 @@ import (
 	"os/signal"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/moonorange/go_api/api/handlers"
 	"github.com/moonorange/go_api/configs"
 	"github.com/moonorange/go_api/gen"
 	"github.com/moonorange/go_api/infra/mysql"
+	"github.com/moonorange/go_api/thttp"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 )
 
@@ -63,8 +63,9 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	}
 
 	// Instantiate MySQL-backed services.
-	s := mysql.NewTODOService(m.DB)
-	todoServer := handlers.NewTaskHandler(s)
+	taskService := mysql.NewTaskService(m.DB)
+	tagService := mysql.NewTagService(m.DB)
+	todoServer := thttp.NewServer(taskService, tagService)
 
 	// This is how you set up a basic chi router
 	r := chi.NewRouter()

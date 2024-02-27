@@ -120,6 +120,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /tag:
+    get:
+      tags:
+      - tag
+      summary: Get the list of all tags
+      operationId: listTags
+      responses:
+        200:
+          description: List of all tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        default:
+          description: Generic error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Task:
@@ -153,3 +174,18 @@ components:
           description: Short description of the error
           type: string
           example: Could not perform the task
+    Tag:
+      description: Object representing a Tag
+      required:
+      - name
+      type: object
+      properties:
+       id:
+          description: id of the tag
+          type: string
+          readOnly: true
+          example: e1cb23d0-6cbe-4a29-b586-bfa424bc93fd
+       name:
+          description: name of the tag
+          type: string
+          example: Work

@@ -16,7 +16,7 @@ make gen-todo
 
 `handlers`: Handlers for each routing
 
-`domain`: Model object
+`models`: Model object
 
 ## DB Migration
 
