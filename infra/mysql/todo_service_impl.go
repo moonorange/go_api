@@ -2,28 +2,26 @@ package mysql
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/google/uuid"
 	"github.com/moonorange/go_api/domain"
 )
 
-// TodoService represents a service for managing dials.
-type TodoService struct {
+// TaskService represents a service for managing dials.
+type TaskService struct {
 	db *DB
 }
 
-// NewTodoService returns a new instance of TodoService.
-func NewTODOService(db *DB) *TodoService {
-	return &TodoService{db: db}
+// NewTaskService returns a new instance of TaskService.
+func NewTODOService(db *DB) *TaskService {
+	return &TaskService{db: db}
 }
 
 // FindDialByID retrieves a single dial by ID along with associated memberships.
 // Only the dial owner & members can see a dial. Returns ENOTFOUND if dial does
 // not exist or user does not have permission to view it.
-func (s *TodoService) TasksGetAll(ctx context.Context) ([]*domain.Todo, error) {
+func (s *TaskService) TasksGetAll(ctx context.Context) ([]*domain.Task, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -36,19 +34,19 @@ func (s *TodoService) TasksGetAll(ctx context.Context) ([]*domain.Todo, error) {
 	}()
 
 	// Fetch todo objects
-	todo, err := s.listTodos(ctx, tx)
+	todo, err := s.listTasks(ctx, tx)
 	if err != nil {
 		return nil, err
 	}
 	return todo, nil
 }
 
-func (s *TodoService) listTodos(ctx context.Context, tx *Tx) ([]*domain.Todo, error) {
+func (s *TaskService) listTasks(ctx context.Context, tx *Tx) ([]*domain.Task, error) {
 
 	args := []interface{}{}
 	// Execute query
 	rows, err := tx.QueryContext(ctx, `
-		SELECT 
+		SELECT
 		    id,
 		    description,
 		    is_completed
@@ -61,10 +59,10 @@ func (s *TodoService) listTodos(ctx context.Context, tx *Tx) ([]*domain.Todo, er
 	}
 	defer rows.Close()
 
-	// Iterate over rows and deserialize into Todo objects.
-	todos := make([]*domain.Todo, 0)
+	// Iterate over rows and deserialize into Task objects.
+	tasks := make([]*domain.Task, 0)
 	for rows.Next() {
-		var todo domain.Todo
+		var todo domain.Task
 		if err := rows.Scan(
 			&todo.ID,
 			&todo.Description,
@@ -72,16 +70,16 @@ func (s *TodoService) listTodos(ctx context.Context, tx *Tx) ([]*domain.Todo, er
 		); err != nil {
 			return nil, err
 		}
-		todos = append(todos, &todo)
+		tasks = append(tasks, &todo)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return todos, nil
+	return tasks, nil
 }
 
-func (s *TodoService) TasksCreate(ctx context.Context, task *domain.Todo) error {
+func (s *TaskService) TasksCreate(ctx context.Context, task *domain.Task) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -93,14 +91,14 @@ func (s *TodoService) TasksCreate(ctx context.Context, task *domain.Todo) error 
 		}
 	}()
 	// Create todo objects
-	err = s.createTodo(ctx, tx, task)
+	err = s.createTask(ctx, tx, task)
 	if err != nil {
 		return err
 	}
 	return tx.Commit()
 }
 
-func (s *TodoService) createTodo(ctx context.Context, tx *Tx, task *domain.Todo) error {
+func (s *TaskService) createTask(ctx context.Context, tx *Tx, task *domain.Task) error {
 	task.ID = uuid.New()
 	// Execute query
 	_, err := tx.ExecContext(ctx, `
@@ -109,7 +107,6 @@ func (s *TodoService) createTodo(ctx context.Context, tx *Tx, task *domain.Todo)
 	`,
 		task.ID, task.Description, task.IsCompleted,
 	)
-	fmt.Fprintf(os.Stdout, "task\n: %+v", task)
 	if err != nil {
 		return err
 	}
@@ -117,14 +114,14 @@ func (s *TodoService) createTodo(ctx context.Context, tx *Tx, task *domain.Todo)
 	return nil
 }
 
-func (s *TodoService) TasksDelete(ctx context.Context, id string) error {
+func (s *TaskService) TasksDelete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *TodoService) TasksRead(ctx context.Context, id string) (domain.Todo, error) {
-	return domain.Todo{}, nil
+func (s *TaskService) TasksRead(ctx context.Context, id string) (domain.Task, error) {
+	return domain.Task{}, nil
 }
 
-func (s *TodoService) TasksUpdate(ctx context.Context, task *domain.Todo) error {
+func (s *TaskService) TasksUpdate(ctx context.Context, task *domain.Task) error {
 	return nil
 }

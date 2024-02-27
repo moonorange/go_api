@@ -1,12 +1,13 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/moonorange/go_api/api/handlers"
@@ -17,47 +18,92 @@ import (
 )
 
 func main() {
-	port := flag.String("port", "8080", "Port for test HTTP server")
-	flag.Parse()
+	// Instantiate a new type to represent our application.
+	// This type lets us shared setup code with our end-to-end tests.
+	ctx, cancel := context.WithCancel(context.Background())
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() { <-c; cancel() }()
 
-	swagger, err := gen.GetSwagger()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+	m := NewMain()
+
+	// Execute program.
+	if err := m.Run(ctx); err != nil {
+		m.Close()
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
 
-	// Clear out the servers array in the swagger spec, that skips validating
-	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
+// Main represents the program.
+type Main struct {
+	// Configuration path and parsed config data.
+	Config     configs.Config
+	HTTPServer *http.Server
 
-	dsn := configs.GetDefaultDSN()
-	db := mysql.NewDB(dsn)
-	err = db.Open()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error opening db\n: %s", err)
-		os.Exit(1)
+	// SQLite database used by SQLite service implementations.
+	DB *mysql.DB
+}
+
+// NewMain returns a new instance of Main.
+func NewMain() *Main {
+	return &Main{
+		Config:     configs.DefaultConfig(),
+		HTTPServer: &http.Server{},
+		DB:         mysql.NewDB(configs.GetDefaultDSN()),
+	}
+}
+
+// Run executes the program. The configuration should already be set up before
+// calling this function.
+func (m *Main) Run(ctx context.Context) (err error) {
+	// Open the database. This will instantiate the MySQL connection
+	if err := m.DB.Open(); err != nil {
+		return fmt.Errorf("cannot open db: %w", err)
 	}
 
-	// Create an instance of our handler which satisfies the generated interface
-	s := mysql.NewTODOService(db)
-	todoServer := handlers.NewTodoHandler(s)
+	// Instantiate MySQL-backed services.
+	s := mysql.NewTODOService(m.DB)
+	todoServer := handlers.NewTaskHandler(s)
 
 	// This is how you set up a basic chi router
 	r := chi.NewRouter()
 
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.
+	swagger, err := gen.GetSwagger()
+	// Clear out the servers array in the swagger spec, that skips validating
+	// that server names match. We don't know how this thing will be run.
+	swagger.Servers = nil
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	r.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our todoServer above as the handler for the interface
 	gen.HandlerFromMux(todoServer, r)
 
-	server := &http.Server{
-		Handler: r,
-		Addr:    net.JoinHostPort("0.0.0.0", *port),
-	}
-	fmt.Printf("Server listening on %s", server.Addr)
+	m.HTTPServer.Addr = net.JoinHostPort("0.0.0.0", "8080")
+	m.HTTPServer.Handler = r
+	fmt.Printf("Server listening on %s", m.HTTPServer.Addr)
 
 	// And we serve HTTP until the world ends.
-	log.Fatal(server.ListenAndServe())
+	log.Fatal(m.HTTPServer.ListenAndServe())
+
+	return nil
+}
+
+// Close gracefully stops the program.
+func (m *Main) Close() error {
+	if m.HTTPServer != nil {
+		if err := m.HTTPServer.Close(); err != nil {
+			return err
+		}
+	}
+	if m.DB != nil {
+		if err := m.DB.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -12,22 +12,38 @@ make gen-todo
 
 `gen`: auto-generated code from the YAML file that follows the swagger specification
 
-`services` Business logic
+`services`: Business logic interface. Actual implementation lies in *service_impl.go
 
-`repositories`: Database interaction logic
+`handlers`: Handlers for each routing
 
-`handlers`: Handlers for each route
+`domain`: Model object
 
 ## DB Migration
 
 Using [pressly/goose](https://github.com/pressly/goose) for db migration
 
+```sh
+cd db/migrations
+goose up
+goose down
+```
+
 ## API Call
 
 Create Task
 
-`curl -d '{"description":"task3", "completed":false}' -H "Content-Type: application/json" -X POST http://localhost:8080/task`
+```sh
+curl -d '{"description":"task3", "completed":false}' -H "Content-Type: application/json" -X POST http://localhost:8080/task
+```
 
 List Task
 
-`curl -H "Content-Type: application/json" -X GET http://localhost:8080/task`
+```sh
+curl -H "Content-Type: application/json" -X GET http://localhost:8080/task
+```
+
+## Hot reloading
+
+```sh
+make air
+```

@@ -1,0 +1,2 @@
+[db]
+dsn = "local_user:mypassword@tcp(127.0.0.1:3306)/mydb?parseTime=true"

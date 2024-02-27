@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/moonorange/go_api/api/services"
 	"github.com/moonorange/go_api/domain"
@@ -15,37 +14,30 @@ import (
 )
 
 type (
-	TodoStore struct {
-		TODOs map[string]gen.Task
-		Lock  sync.Mutex
-	}
 	todoHandler struct {
-		s     services.TodoService
-		Store *TodoStore
+		s services.TaskService
 	}
 )
 
 // Make sure we conform to gen.ServerInterface
 var _ gen.ServerInterface = (*todoHandler)(nil)
 
-func NewTodoHandler(services services.TodoService) gen.ServerInterface {
+func NewTaskHandler(services services.TaskService) gen.ServerInterface {
 	return &todoHandler{
 		s: services,
-		Store: &TodoStore{
-			TODOs: make(map[string]gen.Task)},
 	}
 }
 
 // TasksCreate implements gen.ServerInterface.
 func (t *todoHandler) TasksCreate(w http.ResponseWriter, r *http.Request) {
-	var newTask domain.Todo
+	var newTask domain.Task
 	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "Invalid format for newTask")
 		return
 	}
 
-	err = t.s.TasksCreate(context.Background(), &newTask)
+	err = t.s.TasksCreate(r.Context(), &newTask)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
@@ -73,17 +65,7 @@ func (t *todoHandler) TasksGetAll(w http.ResponseWriter, r *http.Request) {
 
 // TasksRead implements gen.ServerInterface.
 func (t *todoHandler) TasksRead(w http.ResponseWriter, r *http.Request, taskId string) {
-	t.Store.Lock.Lock()
-	defer t.Store.Lock.Unlock()
-
-	v, ok := t.Store.TODOs[taskId]
-	if !ok {
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(nil)
-		return
-	}
-
-	_ = json.NewEncoder(w).Encode(v)
+	panic("unimplemented")
 }
 
 // TasksUpdate implements gen.ServerInterface.
