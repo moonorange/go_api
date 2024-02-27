@@ -38,19 +38,19 @@ func main() {
 // Main represents the program.
 type Main struct {
 	// Configuration path and parsed config data.
-	Config     configs.Config
-	HTTPServer *http.Server
+	Config configs.Config
 
 	// SQLite database used by SQLite service implementations.
-	DB *mysql.DB
+	DB     *mysql.DB
+	Server *thttp.Server
 }
 
 // NewMain returns a new instance of Main.
 func NewMain() *Main {
 	return &Main{
-		Config:     configs.DefaultConfig(),
-		HTTPServer: &http.Server{},
-		DB:         mysql.NewDB(configs.GetDefaultDSN()),
+		Config: configs.DefaultConfig(),
+		DB:     mysql.NewDB(configs.GetDefaultDSN()),
+		Server: &thttp.Server{HTTPServer: &http.Server{}},
 	}
 }
 
@@ -65,7 +65,10 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	// Instantiate MySQL-backed services.
 	taskService := mysql.NewTaskService(m.DB)
 	tagService := mysql.NewTagService(m.DB)
-	todoServer := thttp.NewServer(taskService, tagService)
+
+	// Attach underlying services to the HTTP server.
+	m.Server.TaskService = taskService
+	m.Server.TagService = tagService
 
 	// This is how you set up a basic chi router
 	r := chi.NewRouter()
@@ -82,22 +85,23 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	r.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our todoServer above as the handler for the interface
-	gen.HandlerFromMux(todoServer, r)
+	gen.HandlerFromMux(m.Server, r)
 
-	m.HTTPServer.Addr = net.JoinHostPort("0.0.0.0", "8080")
-	m.HTTPServer.Handler = r
-	fmt.Printf("Server listening on %s", m.HTTPServer.Addr)
+	// TODO: read from env variable
+	m.Server.HTTPServer.Addr = net.JoinHostPort("0.0.0.0", "8080")
+	m.Server.HTTPServer.Handler = r
+	fmt.Printf("Server listening on %s", m.Server.HTTPServer.Addr)
 
 	// And we serve HTTP until the world ends.
-	log.Fatal(m.HTTPServer.ListenAndServe())
+	log.Fatal(m.Server.HTTPServer.ListenAndServe())
 
 	return nil
 }
 
 // Close gracefully stops the program.
 func (m *Main) Close() error {
-	if m.HTTPServer != nil {
-		if err := m.HTTPServer.Close(); err != nil {
+	if m.Server.HTTPServer != nil {
+		if err := m.Server.HTTPServer.Close(); err != nil {
 			return err
 		}
 	}

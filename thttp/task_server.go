@@ -16,7 +16,7 @@ func (t *Server) TasksCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = t.taskService.TasksCreate(r.Context(), &newTask)
+	err = t.TaskService.TasksCreate(r.Context(), &newTask)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
@@ -33,11 +33,11 @@ func (t *Server) TasksDelete(w http.ResponseWriter, r *http.Request, taskId stri
 
 // TasksGetAll implements gen.ServerInterface.
 func (t *Server) TasksGetAll(w http.ResponseWriter, r *http.Request) {
-	tasks, err := t.taskService.TasksGetAll(r.Context())
+	tasks, err := t.TaskService.TasksGetAll(r.Context())
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 	}
-
+	panic("TasksGetAll: panic")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(tasks)
 }

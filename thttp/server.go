@@ -12,20 +12,16 @@ import (
 
 type (
 	Server struct {
-		taskService services.TaskService
-		tagService  services.TagService
+		HTTPServer *http.Server
+
+		// Services used by the various HTTP routes.
+		TaskService services.TaskService
+		TagService  services.TagService
 	}
 )
 
 // Make sure we conform to gen.ServerInterface
 var _ gen.ServerInterface = (*Server)(nil)
-
-func NewServer(taskService services.TaskService, tagService services.TagService) gen.ServerInterface {
-	return &Server{
-		taskService: taskService,
-		tagService:  tagService,
-	}
-}
 
 // Wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
