@@ -46,3 +46,9 @@ curl -H "Content-Type: application/json" -X GET http://localhost:8080/task
 ```sh
 make air
 ```
+
+## Setting up a test environment
+
+```sh
+make setup/test
+```
