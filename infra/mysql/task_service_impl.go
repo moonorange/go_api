@@ -3,9 +3,11 @@ package mysql
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/moonorange/go_api/models"
+	"github.com/moonorange/go_api/terrors"
 )
 
 // TaskService represents a service for managing dials.
@@ -34,16 +36,24 @@ func (s *TaskService) TasksGetAll(ctx context.Context) ([]*models.Task, error) {
 	}()
 
 	// Fetch todo objects
-	todo, err := s.listTasks(ctx, tx)
+	todo, err := s.findTasks(ctx, tx, models.TaskFilter{})
 	if err != nil {
 		return nil, err
 	}
 	return todo, nil
 }
 
-func (s *TaskService) listTasks(ctx context.Context, tx *Tx) ([]*models.Task, error) {
+// findTasks retrieves a list of matching tasks. Also returns a total matching
+// count which may different from the number of results if filter.Limit is set.
+func (s *TaskService) findTasks(ctx context.Context, tx *Tx, filter models.TaskFilter) ([]*models.Task, error) {
 
-	args := []interface{}{}
+	// Build WHERE clause. Each part of the WHERE clause is AND-ed together.
+	// Values are appended to an arg list to avoid SQL injection.
+	where, args := []string{"1 = 1"}, []interface{}{}
+	if v := filter.ID; v != nil {
+		where, args = append(where, "id = ?"), append(args, *v)
+	}
+
 	// Execute query
 	rows, err := tx.QueryContext(ctx, `
 		SELECT
@@ -51,6 +61,8 @@ func (s *TaskService) listTasks(ctx context.Context, tx *Tx) ([]*models.Task, er
 		    description,
 		    is_completed
 		FROM todos
+		WHERE `+strings.Join(where, " AND ")+`
+		ORDER BY id ASC
 		`,
 		args...,
 	)
@@ -118,8 +130,36 @@ func (s *TaskService) TasksDelete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *TaskService) TasksRead(ctx context.Context, id string) (models.Task, error) {
-	return models.Task{}, nil
+func (s *TaskService) TasksRead(ctx context.Context, id string) (*models.Task, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err := tx.Rollback()
+		if err != nil {
+			log.Printf("transaction roll back error")
+		}
+	}()
+
+	// Fetch a task object
+	todo, err := s.findTaskByID(ctx, tx, id)
+	if err != nil {
+		return nil, err
+	}
+	return todo, nil
+}
+
+// findTaskByID is a helper function to retrieve a task by ID.
+// Returns ENOTFOUND if task doesn't exist.
+func (s *TaskService) findTaskByID(ctx context.Context, tx *Tx, id string) (*models.Task, error) {
+	tasks, err := s.findTasks(ctx, tx, models.TaskFilter{ID: &id})
+	if err != nil {
+		return nil, err
+	} else if len(tasks) == 0 {
+		return nil, &terrors.Error{Code: terrors.ENOTFOUND, Message: "Task not found."}
+	}
+	return tasks[0], nil
 }
 
 func (s *TaskService) TasksUpdate(ctx context.Context, task *models.Task) error {

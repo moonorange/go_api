@@ -14,3 +14,13 @@ type Task struct {
 func (t *Task) CompleteTask() {
 	t.IsCompleted = true
 }
+
+// TaskFilter represents a filter used by FindTasks().
+type TaskFilter struct {
+	// Filtering fields.
+	ID *string `json:"id"`
+
+	// Restrict to subset of range.
+	Offset int `json:"offset"`
+	Limit  int `json:"limit"`
+}

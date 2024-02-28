@@ -1,3 +1,0 @@
-package mysql_test
-
-

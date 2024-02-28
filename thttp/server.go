@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/moonorange/go_api/api/services"
 	"github.com/moonorange/go_api/gen"
+	"github.com/moonorange/go_api/services"
 	"github.com/moonorange/go_api/terrors"
 )
 
