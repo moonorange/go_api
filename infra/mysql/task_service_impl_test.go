@@ -24,7 +24,7 @@ func TestTaskService_TasksCreate(t *testing.T) {
 		// Create new dial. Ensure the current user is the owner & an invite code is generated.
 		if err := s.TasksCreate(ctx, task); err != nil {
 			t.Fatal(err)
-		} else if task.ID == uuid.Nil {
+		} else if task.ID == (uuid.UUID{}) {
 			t.Fatal("expected description")
 		} else if got, want := task.Description, "test"; got != want {
 			t.Fatal("expected description")
