@@ -37,7 +37,7 @@ func (t *Server) TasksGetAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 	}
-	panic("TasksGetAll: panic")
+
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(tasks)
 }

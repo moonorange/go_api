@@ -23,7 +23,6 @@ make gen-todo
 Using [pressly/goose](https://github.com/pressly/goose) for db migration
 
 ```sh
-cd db/migrations
 goose up
 goose down
 ```

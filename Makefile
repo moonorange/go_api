@@ -7,3 +7,6 @@ run:
 
 air:
 	air --build.cmd "go build -o tmp/main cmd/server/main.go" --build.bin "./tmp/main"
+
+setup/test:
+	sh scripts/setup_test_env.sh
