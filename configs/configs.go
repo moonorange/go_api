@@ -31,7 +31,7 @@ func GeTestDSN() string {
 	// parseTime=true changes the output type of DATE and DATETIME values to time.Time instead of []byte / string
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?parseTime=true",
-		"local_user",
+		"test_user",
 		"mypassword",
 		"127.0.0.1",
 		"3306",

@@ -9,4 +9,6 @@ air:
 	air --build.cmd "go build -o tmp/main cmd/server/main.go" --build.bin "./tmp/main"
 
 setup/test:
-	sh scripts/setup_test_env.sh
+	mysql -h ${MYSQL_HOST} -u root -P ${MYSQL_PORT} -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_TEST_DATABASE};"
+	mysql -h ${MYSQL_HOST} -u root -P ${MYSQL_PORT} -p${MYSQL_ROOT_PASSWORD} -e "CREATE USER IF NOT EXISTS ${MYSQL_TEST_USER}@${MYSQL_HOST} IDENTIFIED BY '${MYSQL_PASSWORD}'; GRANT ALL ON ${MYSQL_TEST_DATABASE}.* TO ${MYSQL_TEST_USER}@${MYSQL_HOST};"
+	GOOSE_DBSTRING="${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${MYSQL_TEST_DATABASE}?parseTime=true" && goose up

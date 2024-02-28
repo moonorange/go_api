@@ -96,12 +96,8 @@ func (s *TaskService) TasksCreate(ctx context.Context, task *models.Task) error 
 	if err != nil {
 		return err
 	}
-	defer func() {
-		err := tx.Rollback()
-		if err != nil {
-			log.Printf("transaction roll back error")
-		}
-	}()
+	defer tx.Rollback()
+
 	// Create todo objects
 	err = s.createTask(ctx, tx, task)
 	if err != nil {
@@ -135,12 +131,7 @@ func (s *TaskService) TasksRead(ctx context.Context, id string) (*models.Task, e
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		err := tx.Rollback()
-		if err != nil {
-			log.Printf("transaction roll back error")
-		}
-	}()
+	defer tx.Rollback()
 
 	// Fetch a task object
 	todo, err := s.findTaskByID(ctx, tx, id)
