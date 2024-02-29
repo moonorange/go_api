@@ -13,10 +13,9 @@ import (
 func TestTaskService_TasksCreate(t *testing.T) {
 	// Ensure a dial can be created by a user & a membership for the user is automatically created.
 	t.Run("OK", func(t *testing.T) {
-		db := MustOpenDB(t)
-		defer MustCloseDB(t, db)
-
 		ctx := context.Background()
+		db, cleanup := SetupTestDatabase(t, ctx, "todos")
+		t.Cleanup(cleanup)
 
 		s := mysql.NewTaskService(db)
 		task := &models.Task{Description: "test", IsCompleted: false}
