@@ -92,18 +92,19 @@ func (s *TaskService) findTasks(ctx context.Context, tx *Tx, filter models.TaskF
 }
 
 func (s *TaskService) TasksCreate(ctx context.Context, task *models.Task) error {
-	tx, err := s.db.BeginTx(ctx, nil)
+	err := s.db.Transaction(ctx, nil, func(tx *Tx) error {
+		// Create todo objects
+		err := s.createTask(ctx, tx, task)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
 
-	// Create todo objects
-	err = s.createTask(ctx, tx, task)
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
+	return nil
 }
 
 func (s *TaskService) createTask(ctx context.Context, tx *Tx, task *models.Task) error {

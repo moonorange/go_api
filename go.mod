@@ -3,6 +3,7 @@ module github.com/moonorange/go_api
 go 1.22.0
 
 require (
+	github.com/DATA-DOG/go-txdb v0.1.8
 	github.com/getkin/kin-openapi v0.122.0
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-sql-driver/mysql v1.7.1

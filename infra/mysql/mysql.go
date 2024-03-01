@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -81,6 +82,23 @@ type Tx struct {
 	*sql.Tx
 	db  *DB
 	now time.Time
+}
+
+func (db *DB) Transaction(ctx context.Context, opts *sql.TxOptions, f func(*Tx) error) error {
+	tx, err := db.BeginTx(ctx, opts)
+	if err != nil {
+		return err
+	}
+	err = f(tx)
+	if err != nil {
+		err2 := tx.Rollback()
+		if err2 != nil {
+			log.Printf("rollback error: %s", err2)
+		}
+		log.Printf("transaction error: %s", err)
+		return err
+	}
+	return tx.Commit()
 }
 
 // NullTime represents a helper wrapper for time.Time. It automatically converts

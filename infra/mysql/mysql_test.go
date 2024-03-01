@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/DATA-DOG/go-txdb"
 	"github.com/moonorange/go_api/configs"
 	"github.com/moonorange/go_api/infra/mysql"
 )
@@ -26,9 +27,16 @@ func SetupTestDatabase(t *testing.T, ctx context.Context, tables ...string) (*my
 	return db, cleanupFunc
 }
 
+var registeredDBs = make(map[string]struct{})
+
 func MustOpenDB(t *testing.T) *mysql.DB {
 	testDSN := configs.GeTestDSN()
 	db := mysql.NewDB(testDSN)
+	_, ok := registeredDBs[testDSN]
+	if !ok {
+		txdb.Register("mydb_test", "mysql", testDSN)
+		registeredDBs[testDSN] = struct{}{}
+	}
 	if err := db.Open(); err != nil {
 		t.Fatal(err)
 	}
