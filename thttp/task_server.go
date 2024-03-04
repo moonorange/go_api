@@ -35,7 +35,7 @@ func (t *Server) TasksDelete(w http.ResponseWriter, r *http.Request, taskId stri
 func (t *Server) TasksGetAll(w http.ResponseWriter, r *http.Request) {
 	tasks, err := t.TaskService.TasksGetAll(r.Context())
 	if err != nil {
-		sendError(w, http.StatusBadRequest, err.Error())
+		Error(w, r, err)
 	}
 
 	w.WriteHeader(http.StatusOK)
