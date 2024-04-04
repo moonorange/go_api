@@ -76,3 +76,19 @@ Apply migration to the test database.
 ```sh
 make setup/test
 ```
+
+## Monitoring
+
+This project uses `Prometheus` and `Grafana` for monitoring.
+
+### Prometheus
+
+After running `make up`, go to http://localhost:9090/metrics to access and check the metrics collected by Prometheus.
+
+### Grafana
+
+After running `make up`, go to http://localhost:3000 to access Grafana's interactive dashboards and explore the metrics
+
+You can sign in with the following credentials:
+- username: admin
+- password admin
