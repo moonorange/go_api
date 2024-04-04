@@ -31,15 +31,23 @@ goose up
 goose down
 ```
 
-## Run the server
+## Run server
 
-Run the server
+Start necessary services on Docker
+
+```sh
+make up
+```
+
+Run API server
 
 ```sh
 make run
 ```
 
-Run the server with Hot reloading
+Run server with Hot reloading
+
+This command runs the server with hot reloading enabled for faster development iterations.
 
 ```sh
 make air
