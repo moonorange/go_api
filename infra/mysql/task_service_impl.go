@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/moonorange/go_api/models"
+	"github.com/moonorange/go_api/domain"
 	"github.com/moonorange/go_api/terrors"
 )
 
@@ -23,7 +23,7 @@ func NewTaskService(db *DB) *TaskService {
 // FindDialByID retrieves a single dial by ID along with associated memberships.
 // Only the dial owner & members can see a dial. Returns ENOTFOUND if dial does
 // not exist or user does not have permission to view it.
-func (s *TaskService) TasksGetAll(ctx context.Context) ([]*models.Task, error) {
+func (s *TaskService) TasksGetAll(ctx context.Context) ([]*domain.Task, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (s *TaskService) TasksGetAll(ctx context.Context) ([]*models.Task, error) {
 	}()
 
 	// Fetch todo objects
-	todo, err := s.findTasks(ctx, tx, models.TaskFilter{})
+	todo, err := s.findTasks(ctx, tx, domain.TaskFilter{})
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (s *TaskService) TasksGetAll(ctx context.Context) ([]*models.Task, error) {
 
 // findTasks retrieves a list of matching tasks. Also returns a total matching
 // count which may different from the number of results if filter.Limit is set.
-func (s *TaskService) findTasks(ctx context.Context, tx *Tx, filter models.TaskFilter) ([]*models.Task, error) {
+func (s *TaskService) findTasks(ctx context.Context, tx *Tx, filter domain.TaskFilter) ([]*domain.Task, error) {
 
 	// Build WHERE clause. Each part of the WHERE clause is AND-ed together.
 	// Values are appended to an arg list to avoid SQL injection.
@@ -72,9 +72,9 @@ func (s *TaskService) findTasks(ctx context.Context, tx *Tx, filter models.TaskF
 	defer rows.Close()
 
 	// Iterate over rows and deserialize into Task objects.
-	tasks := make([]*models.Task, 0)
+	tasks := make([]*domain.Task, 0)
 	for rows.Next() {
-		var todo models.Task
+		var todo domain.Task
 		if err := rows.Scan(
 			&todo.ID,
 			&todo.Description,
@@ -91,7 +91,7 @@ func (s *TaskService) findTasks(ctx context.Context, tx *Tx, filter models.TaskF
 	return tasks, nil
 }
 
-func (s *TaskService) TasksCreate(ctx context.Context, task *models.Task) error {
+func (s *TaskService) TasksCreate(ctx context.Context, task *domain.Task) error {
 	err := s.db.Transaction(ctx, nil, func(tx *Tx) error {
 		// Create todo objects
 		err := s.createTask(ctx, tx, task)
@@ -107,7 +107,7 @@ func (s *TaskService) TasksCreate(ctx context.Context, task *models.Task) error 
 	return nil
 }
 
-func (s *TaskService) createTask(ctx context.Context, tx *Tx, task *models.Task) error {
+func (s *TaskService) createTask(ctx context.Context, tx *Tx, task *domain.Task) error {
 	task.ID = uuid.New()
 	// Execute query
 	_, err := tx.ExecContext(ctx, `
@@ -127,7 +127,7 @@ func (s *TaskService) TasksDelete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *TaskService) TasksRead(ctx context.Context, id string) (*models.Task, error) {
+func (s *TaskService) TasksRead(ctx context.Context, id string) (*domain.Task, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -144,8 +144,8 @@ func (s *TaskService) TasksRead(ctx context.Context, id string) (*models.Task, e
 
 // findTaskByID is a helper function to retrieve a task by ID.
 // Returns ENOTFOUND if task doesn't exist.
-func (s *TaskService) findTaskByID(ctx context.Context, tx *Tx, id string) (*models.Task, error) {
-	tasks, err := s.findTasks(ctx, tx, models.TaskFilter{ID: &id})
+func (s *TaskService) findTaskByID(ctx context.Context, tx *Tx, id string) (*domain.Task, error) {
+	tasks, err := s.findTasks(ctx, tx, domain.TaskFilter{ID: &id})
 	if err != nil {
 		return nil, err
 	} else if len(tasks) == 0 {
@@ -154,6 +154,6 @@ func (s *TaskService) findTaskByID(ctx context.Context, tx *Tx, id string) (*mod
 	return tasks[0], nil
 }
 
-func (s *TaskService) TasksUpdate(ctx context.Context, task *models.Task) error {
+func (s *TaskService) TasksUpdate(ctx context.Context, task *domain.Task) error {
 	return nil
 }

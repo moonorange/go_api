@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 
-	"github.com/moonorange/go_api/models"
+	"github.com/moonorange/go_api/domain"
 )
 
 type TagService interface {
-	ListTags(ctx context.Context) ([]*models.Tag, error)
+	ListTags(ctx context.Context) ([]*domain.Tag, error)
 }

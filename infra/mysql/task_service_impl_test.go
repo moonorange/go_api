@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/moonorange/go_api/domain"
 	"github.com/moonorange/go_api/infra/mysql"
-	"github.com/moonorange/go_api/models"
 )
 
 func TestTaskService_TasksCreate(t *testing.T) {
@@ -18,7 +18,7 @@ func TestTaskService_TasksCreate(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		s := mysql.NewTaskService(db)
-		task := &models.Task{Description: "test", IsCompleted: false}
+		task := &domain.Task{Description: "test", IsCompleted: false}
 
 		// Create new dial. Ensure the current user is the owner & an invite code is generated.
 		if err := s.TasksCreate(ctx, task); err != nil {

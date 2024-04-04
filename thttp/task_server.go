@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/moonorange/go_api/models"
+	"github.com/moonorange/go_api/domain"
 )
 
 // TasksCreate implements gen.ServerInterface.
 func (t *Server) TasksCreate(w http.ResponseWriter, r *http.Request) {
-	var newTask models.Task
+	var newTask domain.Task
 	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "Invalid format for newTask")
