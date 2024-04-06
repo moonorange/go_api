@@ -157,12 +157,13 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	handler := gen.HandlerFromMux(m.Server, r)
 
 	// Create a new HTTP server for serving metrics
-	metricsServer := http.NewServeMux()
-	metricsServer.Handle("/metrics", promhttp.Handler())
+	r2 := chi.NewRouter()
+	r2.Use(prometheusMiddleware)
+	r2.Handle("/metrics", promhttp.Handler())
 
 	// Start the metrics server in a goroutine
 	go func() {
-		if err := http.ListenAndServe(":8081", metricsServer); err != nil {
+		if err := http.ListenAndServe(":8081", r2); err != nil {
 			log.Fatalf("Failed to start metrics server: %v", err)
 		}
 	}()
