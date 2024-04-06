@@ -150,18 +150,26 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	r.Use(middleware.OapiRequestValidator(swagger))
-	r.Use(prometheusMiddleware)
 
-	// Register Prometheus metrics endpoint
-	r.Handle("/metrics", promhttp.Handler())
+	r.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our todoServer above as the handler for the interface
-	gen.HandlerFromMux(m.Server, r)
+	handler := gen.HandlerFromMux(m.Server, r)
+
+	// Create a new HTTP server for serving metrics
+	metricsServer := http.NewServeMux()
+	metricsServer.Handle("/metrics", promhttp.Handler())
+
+	// Start the metrics server in a goroutine
+	go func() {
+		if err := http.ListenAndServe(":8081", metricsServer); err != nil {
+			log.Fatalf("Failed to start metrics server: %v", err)
+		}
+	}()
 
 	// TODO: read from env variable
 	m.Server.HTTPServer.Addr = net.JoinHostPort("0.0.0.0", "8080")
-	m.Server.HTTPServer.Handler = r
+	m.Server.HTTPServer.Handler = handler
 	fmt.Printf("Server listening on %s", m.Server.HTTPServer.Addr)
 
 	// And we serve HTTP until the world ends.

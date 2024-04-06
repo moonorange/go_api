@@ -360,7 +360,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		HandlerMiddlewares: options.Middlewares,
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
-
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/tag", wrapper.ListTags)
 	})

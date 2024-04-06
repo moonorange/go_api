@@ -2,3 +2,6 @@
 .env*
 
 tmp/
+
+__debug_bin4084169797
+.DS_Store
